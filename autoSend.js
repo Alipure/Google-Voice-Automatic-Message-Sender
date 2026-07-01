@@ -3,58 +3,24 @@ const delay = (ms) => new Promise(r => setTimeout(r, ms));
 const cards = [...document.querySelectorAll("div.container.vnt[role='button']")];
 
 const clickSendButton = () => {
-  // Find the send button by looking for mat-icon with "send" text
-  let btn = null;
-  
-  // Method 1: Find by the specific path with mat-icon
-  const icon = document.querySelector(
-    "#gvPageRoot gv-message-entry div.button-container button mat-icon"
+  // Use the exact path to the send button ONLY
+  const btn = document.querySelector(
+    "#gvPageRoot > div:nth-child(2) > gv-app > gv-side-panel > mat-sidenav-container > mat-sidenav-content > div > div.content-container > gv-threads-view > div > div.thread-detail-container.ng-star-inserted > gv-thread-details > mat-drawer-container > mat-drawer-content > div.message-entry-container.ng-star-inserted > gv-message-entry > div > div > div.button-container > button"
   );
   
-  if (icon && icon.textContent.trim() === 'send') {
-    btn = icon.closest('button');
-  }
-  
-  // Method 2: Find all mat-icons and check their text
-  if (!btn) {
-    const allIcons = document.querySelectorAll('mat-icon');
-    for (const icon of allIcons) {
-      if (icon.textContent.trim() === 'send') {
-        btn = icon.closest('button');
-        if (btn) break;
-      }
-    }
-  }
-  
-  // Method 3: Look for the specific button by class or attribute
-  if (!btn) {
-    const buttons = document.querySelectorAll('gv-message-entry button');
-    for (const button of buttons) {
-      // Check if button contains a send icon
-      const icon = button.querySelector('mat-icon');
-      if (icon && icon.textContent.trim() === 'send') {
-        btn = button;
-        break;
-      }
-    }
-  }
-  
-  // Method 4: Try the exact path from your HTML
-  if (!btn) {
-    btn = document.querySelector(
-      "#gvPageRoot > div:nth-child(2) > gv-app > gv-side-panel > mat-sidenav-container > mat-sidenav-content > div > div.content-container > gv-threads-view > div > div.thread-detail-container.ng-star-inserted > gv-thread-details > mat-drawer-container > mat-drawer-content > div.message-entry-container.ng-star-inserted > gv-message-entry > div > div > div.button-container > button"
-    );
-  }
-  
   if (btn) {
-    // Check if the button is enabled
+    console.log("Send button found!");
+    console.log("Is disabled?", btn.disabled);
+    
     if (!btn.disabled) {
+      // Only use click() - no MouseEvent which might be triggering wrong button
       btn.click();
       console.log("Send button clicked!");
       
-      // Visual feedback
-      btn.style.outline = "3px solid red";
-      btn.style.opacity = "0.8";
+      // Visual feedback on the send button
+      btn.style.outline = "3px solid green";
+      btn.style.backgroundColor = "rgba(0, 255, 0, 0.5)";
+      
       return true;
     } else {
       console.log("Send button is disabled");
@@ -76,26 +42,27 @@ const clickSendButton = () => {
     const box = document.querySelector("textarea.message-input");
     if (box) {
       box.focus();
-      box.value = "Hi";
+      
+      const message = "Hi";
+      box.value = message;
       box.dispatchEvent(new Event("input", { bubbles: true }));
+      box.dispatchEvent(new Event("change", { bubbles: true }));
       
-      // Wait for the send button to become enabled
-      await delay(500);
+      console.log("Message typed, waiting for send button to enable...");
       
-      // Try to click the send button
-      let sent = clickSendButton();
-      
-      // If not sent, try again after a short delay
-      if (!sent) {
-        console.log("Retrying...");
-        await delay(300);
+      // Wait and retry
+      let sent = false;
+      for (let i = 0; i < 10; i++) {
+        await delay(500);
         sent = clickSendButton();
+        if (sent) break;
       }
       
       if (!sent) {
-        console.log("Waiting for manual send...");
+        console.log("Could not send automatically. Waiting for manual send...");
         await new Promise(r => setTimeout(r, 3000));
       } else {
+        console.log("Message sent successfully!");
         await delay(1000);
       }
     } else {
